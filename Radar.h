@@ -6,7 +6,6 @@ float getDistance();
 void updateRadarAngle();
 void drawTerminalRadar(int a, float d);
 
-// On rend l'angle accessible au reste du programme si besoin
-extern int currentPulse; 
+extern float* scan; 
 
 #endif

@@ -3,9 +3,21 @@
 
 #include "Controller.h"
 
+GamepadState gamepad = {0, 0, 0, 0, 0, 0, false};
+
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
-int xbox_stick_ly = 0;
-int xbox_stick_ry = 0;
+
+// --- Utilitaires intelligents ---
+
+// Vrai uniquement à l'instant où on appuie (Front montant)
+bool isJustPressed(uint32_t buttonMask) {
+    return (gamepad.buttons & buttonMask) && !(gamepad.prevButtons & buttonMask);
+}
+
+// Vrai tant que le bouton est maintenu
+bool isHeld(uint32_t buttonMask) {
+    return (gamepad.buttons & buttonMask);
+}
 
 // Fonction appelée quand une manette se connecte
 void onConnectedController(ControllerPtr ctl) {
@@ -37,19 +49,21 @@ void setupController() {
 }
 
 void updateController() {
-    // Obligatoire pour mettre à jour l'état du Bluetooth
     BP32.update();
-
-    xbox_stick_ly = 0;
-    xbox_stick_ry = 0;
 
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         ControllerPtr ctl = myControllers[i];
 
         if (ctl && ctl->isConnected()) {
-            // Lecture des sticks (valeurs entre -511 et 512)
-            xbox_stick_ly = ctl->axisY();
-            xbox_stick_ry = ctl->axisRY();
+            // Sauvegarde de l'ancien état pour le prochain tour
+            gamepad.prevButtons = gamepad.buttons;
+
+            // Mise à jour des valeurs
+            gamepad.lx = ctl->axisX();
+            gamepad.ly = ctl->axisY();
+            gamepad.rx = ctl->axisRX();
+            gamepad.ry = ctl->axisRY();
+            gamepad.buttons = ctl->buttons();
         }
     }
 }
