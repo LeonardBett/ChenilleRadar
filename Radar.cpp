@@ -4,12 +4,12 @@
 #include "Radar.h"
 #include "Config.h"
 
-// Variables internes
+// Le servo a angle du radar
 Servo radarServo;
 
-const int pulseStep = 62.5; // Vitesse du balayage (plus petit = plus lent/fluide)
-int MIN_PULSE = 1000; 
-int MAX_PULSE = 2000; 
+const int pulseStep = 62.5; // Decide le nombre de mesure du baleyage
+int MIN_PULSE = 1000; // Angle gauche max du radar
+int MAX_PULSE = 2000; // Angle droit max du radar
 
 float* scan;
 
@@ -19,18 +19,27 @@ volatile unsigned long echoDuration = 0;
 volatile bool distanceReady = false;
 
 // Fonction d'interruption (exécutée en RAM prioritaire)
+// Pour empecher les problemes du calcul de distance lié au bluetooth
 void IRAM_ATTR echo_ISR() {
+    // On capture le temps quand l'echo part
     if (digitalRead(PIN_ECHO) == HIGH) {
         echoStart = micros(); 
-    } else {
+    } 
+    // Puis on calcul la duree quand l'echo revient
+    else { 
         echoDuration = micros() - echoStart; 
         distanceReady = true; 
     }
 }
 
 void setupRadar() {
+    // On setup le hc-sr04 du radar (qui va tourner)
     pinMode(PIN_TRIG, OUTPUT);
     pinMode(PIN_ECHO, INPUT);
+
+    // Puis celui du radar fixe, qui checkera juste la distance avec un obstacle
+    pinMode(PIN_TRIG2, OUTPUT);
+    pinMode(PIN_ECHO2, INPUT);
 
     // Attache l'interruption au pin ECHO
     attachInterrupt(digitalPinToInterrupt(PIN_ECHO), echo_ISR, CHANGE);
@@ -39,13 +48,22 @@ void setupRadar() {
     radarServo.setPeriodHertz(50);
     radarServo.attach(PIN_SERVO); 
 
-    // On initialise au "milieu" théorique
+    // On initialise le radar a gauche
     radarServo.writeMicroseconds(MIN_PULSE);
 
     scan = (float*) malloc(sizeof(float) * 16);
 }
 
-// AI for debug
+// Utilsié pour affihcer le tableau de distance sur le serial, pour l'entrainement Edge Impulse
+void printScanForEI() {
+    for(int i = 0; i < 16; i++) {
+        Serial.print(scan[i]);
+        if (i < 15) Serial.print(",");
+    }
+    Serial.println();
+}
+
+// Methode généré par IA pour afficher les data du module
 void printScan() {
     // 1. L'affichage brut d'origine (sur une ligne)
     Serial.print("Scan : [");
@@ -102,8 +120,11 @@ void printScan() {
     Serial.println("================================\n");
 }
 
+// Methode interne qui capture la distance du hc-sr04 tournant sur servo
+// Utilise une interruption pour éviter le probleme du calcul de distance faussé par le bt qui prends la main sur le CPU
 float getDistance() {
     distanceReady = false;
+    echoDuration = 0;
 
     digitalWrite(PIN_TRIG, LOW);
     delayMicroseconds(3);
@@ -119,19 +140,24 @@ float getDistance() {
         }
         delay(1); // Rend la main pour éviter le plantage du Bluetooth
     }
-    
     return (echoDuration * 0.0343) / 2.0;
 }
 
+// Donne la distance du hc-sr04 fixe
+float getFixedDistance() {
+    digitalWrite(PIN_TRIG2, LOW);
+    delayMicroseconds(3);
+    digitalWrite(PIN_TRIG2, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(PIN_TRIG2, LOW);
+    
+    long duration = pulseIn(PIN_ECHO2, HIGH, 30000); 
+    if (duration == 0) return 400.0;
+    return (duration * 0.0343) / 2.0;
+}
+
+// Active le servo du radar vers son prochain angle, et recupere la distance lié
 void updateRadarAngle() {
-    /* CALIBRAGE POUR SERVO 360° :
-       - 500µs  = 0°
-       - 1500µs = 180°  (milieu)
-       - 2500µs = 360°
-       
-       Pour faire un balayage de 180° (entre le quart et les trois-quarts du moteur) :
-       On va aller de 1000µs (90°) à 2000µs (270°)
-    */
     int currentPulse = MIN_PULSE;
     radarServo.writeMicroseconds(currentPulse);
     delay(40);
@@ -140,8 +166,8 @@ void updateRadarAngle() {
         currentPulse += pulseStep;
         radarServo.writeMicroseconds(currentPulse);
         delay(60);
+        delay(10);
         scan[i] = getDistance();
     }
     radarServo.writeMicroseconds(MIN_PULSE);
-    printScan();
 }

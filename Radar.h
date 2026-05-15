@@ -2,9 +2,9 @@
 #define RADAR_H
 
 void setupRadar();
-float getDistance();
+float getFixedDistance();
 void updateRadarAngle();
-void drawTerminalRadar(int a, float d);
+void printScanForEI();
 
 extern float* scan; 
 
