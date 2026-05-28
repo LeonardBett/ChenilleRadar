@@ -6,6 +6,6 @@ float getFixedDistance();
 void updateRadarAngle();
 void printScanForEI();
 
-extern float* scan; 
+extern float* scanL; 
 
 #endif

@@ -4,19 +4,25 @@
 #include "Motors.h"
 #include "Config.h"
 
+// Servomoteurs utilisées pour le déplacement
 Servo motorLeft;
 Servo motorRight;
 
+// Pour gérer la zone morte des manettes
 const int DEADZONE = 50; 
 
+// Initialise les servomoteurs utilisées pour le déplacement
 void setupMotors() {
+    // On créer la réference utilisée pour l'utilisation des servos
     ESP32PWM::allocateTimer(1);
     motorLeft.setPeriodHertz(50);
     motorRight.setPeriodHertz(50);
 
+    // On lie les pins de l'esp32 aux variables servos
     motorLeft.attach(PIN_MOT_G, 500, 2400);
     motorRight.attach(PIN_MOT_D, 500, 2400);
 
+    // On arrete les servos par sécurités
     stopMotors();
 }
 

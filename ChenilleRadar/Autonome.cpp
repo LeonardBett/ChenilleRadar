@@ -19,7 +19,7 @@ bool isAutonomous = false;
 String getAIPrediction() {
     // 1. On remplit le tableau de "features" avec tes 16 distances
     for (int i = 0; i < 16; i++) {
-        features[i] = scan[i];
+        features[i] = scanL[i];
     }
 
     // 2. Conversion pour le format Edge Impulse

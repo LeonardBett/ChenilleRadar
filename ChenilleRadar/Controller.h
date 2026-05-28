@@ -3,7 +3,7 @@
 
 #include <Bluepad32.h>
 
-// Structure pour regrouper toutes les données proprement
+// Structure binaire qui regroupe toutes les input 
 struct GamepadState {
     int ly, ry;         // Sticks verticaux
     int lx, rx;         // Sticks horizontaux

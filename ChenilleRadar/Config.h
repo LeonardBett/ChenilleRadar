@@ -1,6 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
-// Connexion des pins
+// Connexion des pins du robot
 const int PIN_SERVO = 18;
 const int PIN_TRIG = 13;
 const int PIN_ECHO = 12;

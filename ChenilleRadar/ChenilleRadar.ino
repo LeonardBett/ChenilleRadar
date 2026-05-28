@@ -10,15 +10,12 @@ void setup() {
     Serial.begin(115200);  // Serial où seront affiché les print
     delay(100); // PAUSE de 2 sec pour que la batterie se stabilise
     
-    Serial.println("Initialisation Moteurs...");
     setupMotors();
     delay(100);
 
-    Serial.println("Initialisation Radar...");
     setupRadar();
     delay(100);
 
-    Serial.println("Lancement Bluetooth...");
     setupController(); // On lance le Bluetooth EN DERNIER
 }
 
@@ -27,7 +24,7 @@ void loop() {
 
   if (isControllerConnected()) {
 
-    // Obligé pour etre detecté par le data forwader d'edge impulse 
+    // Spam de donnée fausse pour etre detecté par le data forwader d'edge impulse 
     if (isHeld(BUTTON_X)) {
         // On envoie en boucle tant que le bouton est maintenu
         Serial.println("10.0,15.0,20.0,25.0,30.0,35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,85.0");

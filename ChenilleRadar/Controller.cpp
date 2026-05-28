@@ -7,9 +7,7 @@ GamepadState gamepad = {0, 0, 0, 0, 0, 0, false};
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
-// --- Utilitaires intelligents ---
-
-// Vrai uniquement à l'instant où on appuie (Front montant)
+// Vrai uniquement à l'instant où on appuie
 bool isJustPressed(uint32_t buttonMask) {
     return (gamepad.buttons & buttonMask) && !(gamepad.prevButtons & buttonMask);
 }
@@ -24,7 +22,7 @@ void onConnectedController(ControllerPtr ctl) {
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         if (myControllers[i] == nullptr) {
             myControllers[i] = ctl;
-            Serial.println("Manette Xbox connectee !");
+            Serial.println("Manette Xbox connectée");
             break;
         }
     }
@@ -35,30 +33,33 @@ void onDisconnectedController(ControllerPtr ctl) {
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         if (myControllers[i] == ctl) {
             myControllers[i] = nullptr;
-            Serial.println("Manette Xbox deconnectee...");
+            Serial.println("Manette Xbox deconnectée");
             break;
         }
     }
 }
 
+// Initialise Bluepad32
 void setupController() {
     // Initialise Bluepad32
     BP32.setup(&onConnectedController, &onDisconnectedController);
-    // Oublie les anciennes manettes appairées (optionnel mais propre)
+    // Oublie les anciennes manettes appairées
     BP32.forgetBluetoothKeys();
 }
 
+// Met à jour l'état de la manette
 void updateController() {
     BP32.update();
 
+    // On parcours et met à jour l'état de toutes les manettes connectées
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         ControllerPtr ctl = myControllers[i];
-
         if (ctl && ctl->isConnected()) {
-            // Sauvegarde de l'ancien état pour le prochain tour
+
+            // Sauvegarde de l'ancien état pour la prochaine itération
             gamepad.prevButtons = gamepad.buttons;
 
-            // Mise à jour des valeurs
+            // Mise à jour des inputs
             gamepad.lx = ctl->axisX();
             gamepad.ly = ctl->axisY();
             gamepad.rx = ctl->axisRX();
@@ -68,6 +69,7 @@ void updateController() {
     }
 }
 
+// Renvoi true si au moins une manette est connectée
 bool isControllerConnected(){
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         if (myControllers[i] != nullptr) {
